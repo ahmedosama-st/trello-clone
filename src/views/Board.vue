@@ -1,9 +1,83 @@
 <template>
-  <div class="board"></div>
+  <div class="board">
+    <div class="flex flex-row place-items-start">
+      <div
+        class="column"
+        v-for="(column, $columnIndex) in board.columns"
+        :key="$columnIndex"
+      >
+        <div class="flex items-center mb-2 font-bold">
+          {{ column.name }}
+        </div>
+        <div class="list-reset">
+          <div
+            class="task"
+            v-for="(task, $taskIndex) in column.tasks"
+            :key="$taskIndex"
+            @click="openTask(task)"
+          >
+            <span class="w-full flex-no-shrink font-bold">{{ task.name }}</span>
+            <p
+              class="w-full flex-no-shrink mt-1 text-sm"
+              v-if="task.description"
+            >
+              {{ task.description }}
+            </p>
+          </div>
+
+          <input
+            type="text"
+            class="block p-2 w-full bg-transparent border-2 border-gray-300 rounded-lg"
+            placeholder="Add a task..."
+            @keyup.enter="addTask($event, $columnIndex)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="task-bg" v-if="isTaskOpen" @click.self="closeTask">
+      <router-view />
+    </div>
+  </div>
 </template>
 
 <script>
-export default {};
+import { useGetters } from 'vuex-composition-helpers/dist';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
+export default {
+  setup() {
+    const store = useStore();
+    const route = useRoute();
+    const router = useRouter();
+    const { board } = useGetters(['board']);
+
+    const isTaskOpen = computed(() => route.name === 'task');
+    const openTask = (task) => {
+      router.push({ name: 'task', params: { id: task.id } });
+    };
+    const closeTask = () => {
+      router.push({ name: 'home' });
+    };
+    const addTask = (event, column) => {
+      store.dispatch('addTask', {
+        column,
+        name: event.target.value,
+      });
+
+      event.target.value = '';
+    };
+
+    return {
+      board,
+      isTaskOpen,
+      openTask,
+      closeTask,
+      addTask,
+    };
+  },
+};
 </script>
 
 <style lang="css">
@@ -21,7 +95,7 @@ export default {};
 }
 
 .task-bg {
-  @apply absolute;
+  @apply absolute bottom-0 left-0 top-0 right-0;
   background: rgba(0, 0, 0, 0.5);
 }
 </style>
