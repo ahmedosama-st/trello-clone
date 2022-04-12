@@ -5,6 +5,9 @@
         class="column"
         v-for="(column, $columnIndex) in board.columns"
         :key="$columnIndex"
+        @drop="moveTask($event, $columnIndex)"
+        @dragover.prevent
+        @dragenter.prevent
       >
         <div class="flex items-center mb-2 font-bold">
           {{ column.name }}
@@ -14,6 +17,8 @@
             class="task"
             v-for="(task, $taskIndex) in column.tasks"
             :key="$taskIndex"
+            draggable="true"
+            @dragstart="pickupTask($event, $taskIndex, $columnIndex)"
             @click="openTask(task)"
           >
             <span class="w-full flex-no-shrink font-bold">{{ task.name }}</span>
@@ -68,6 +73,25 @@ export default {
 
       event.target.value = '';
     };
+    const pickupTask = (e, taskIndex, fromColumnIndex) => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.dropEffect = 'move';
+
+      e.dataTransfer.setData('taskIndex', taskIndex);
+      e.dataTransfer.setData('fromColumnIndex', fromColumnIndex);
+    };
+    const moveTask = (e, toColumnIndex) => {
+      const taskIndex = parseInt(e.dataTransfer.getData('taskIndex'));
+      const fromColumnIndex = parseInt(
+        e.dataTransfer.getData('fromColumnIndex'),
+      );
+
+      store.dispatch('moveTask', {
+        fromColumnIndex,
+        toColumnIndex,
+        taskIndex,
+      });
+    };
 
     return {
       board,
@@ -75,6 +99,8 @@ export default {
       openTask,
       closeTask,
       addTask,
+      pickupTask,
+      moveTask,
     };
   },
 };

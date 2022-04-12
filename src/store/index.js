@@ -34,8 +34,16 @@ export default createStore({
       });
     },
 
-    UPDATE_TASK(state, { task, key, value }) {
+    UPDATE_TASK(_, { task, key, value }) {
       task[key] = value;
+    },
+
+    MOVE_TASK(state, { fromColumnIndex, toColumnIndex, taskIndex }) {
+      const task = state.board.columns[fromColumnIndex].tasks.splice(
+        taskIndex,
+        1,
+      )[0];
+      state.board.columns[toColumnIndex].tasks.push(task);
     },
   },
 
@@ -46,6 +54,9 @@ export default createStore({
 
     updateTask({ commit }, { task, key, value }) {
       commit('UPDATE_TASK', { task, key, value });
+    },
+    moveTask({ commit }, { fromColumnIndex, toColumnIndex, taskIndex }) {
+      commit('MOVE_TASK', { fromColumnIndex, toColumnIndex, taskIndex });
     },
   },
   modules: {},
