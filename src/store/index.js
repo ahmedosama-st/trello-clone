@@ -34,16 +34,31 @@ export default createStore({
       });
     },
 
+    CREATE_COLUMN(state, { name }) {
+      state.board.columns.push({
+        name,
+        tasks: [],
+      });
+    },
+
     UPDATE_TASK(_, { task, key, value }) {
       task[key] = value;
     },
 
-    MOVE_TASK(state, { fromColumnIndex, toColumnIndex, taskIndex }) {
+    MOVE_TASK(
+      state,
+      { fromColumnIndex, toColumnIndex, fromTaskIndex, toTaskIndex },
+    ) {
       const task = state.board.columns[fromColumnIndex].tasks.splice(
-        taskIndex,
+        fromTaskIndex,
         1,
       )[0];
-      state.board.columns[toColumnIndex].tasks.push(task);
+      state.board.columns[toColumnIndex].tasks.splice(toTaskIndex, 0, task);
+    },
+
+    MOVE_COLUMN(state, { fromColumnIndex, toColumnIndex }) {
+      const column = state.board.columns.splice(fromColumnIndex, 1)[0];
+      state.board.columns.splice(toColumnIndex, 0, column);
     },
   },
 
@@ -52,11 +67,26 @@ export default createStore({
       commit('CREATE_TASK', { column, name });
     },
 
+    addColumn({ commit }, { name }) {
+      commit('CREATE_COLUMN', { name });
+    },
+
     updateTask({ commit }, { task, key, value }) {
       commit('UPDATE_TASK', { task, key, value });
     },
-    moveTask({ commit }, { fromColumnIndex, toColumnIndex, taskIndex }) {
-      commit('MOVE_TASK', { fromColumnIndex, toColumnIndex, taskIndex });
+    moveTask(
+      { commit },
+      { fromColumnIndex, toColumnIndex, fromTaskIndex, toTaskIndex },
+    ) {
+      commit('MOVE_TASK', {
+        fromColumnIndex,
+        toColumnIndex,
+        fromTaskIndex,
+        toTaskIndex,
+      });
+    },
+    moveColumn({ commit }, { fromColumnIndex, toColumnIndex }) {
+      commit('MOVE_COLUMN', { fromColumnIndex, toColumnIndex });
     },
   },
   modules: {},

@@ -1,43 +1,23 @@
 <template>
   <div class="board">
     <div class="flex flex-row place-items-start">
-      <div
-        class="column"
+      <div class="column flex">
+        <input
+          type="text"
+          class="p-2 mr-2 flex-grow"
+          placeholder="Add new column"
+          v-model="newColumnName"
+          @keyup.enter="addColumn"
+        />
+      </div>
+
+      <BoardColumn
         v-for="(column, $columnIndex) in board.columns"
         :key="$columnIndex"
-        @drop="moveTask($event, $columnIndex)"
-        @dragover.prevent
-        @dragenter.prevent
-      >
-        <div class="flex items-center mb-2 font-bold">
-          {{ column.name }}
-        </div>
-        <div class="list-reset">
-          <div
-            class="task"
-            v-for="(task, $taskIndex) in column.tasks"
-            :key="$taskIndex"
-            draggable="true"
-            @dragstart="pickupTask($event, $taskIndex, $columnIndex)"
-            @click="openTask(task)"
-          >
-            <span class="w-full flex-no-shrink font-bold">{{ task.name }}</span>
-            <p
-              class="w-full flex-no-shrink mt-1 text-sm"
-              v-if="task.description"
-            >
-              {{ task.description }}
-            </p>
-          </div>
-
-          <input
-            type="text"
-            class="block p-2 w-full bg-transparent border-2 border-gray-300 rounded-lg"
-            placeholder="Add a task..."
-            @keyup.enter="addTask($event, $columnIndex)"
-          />
-        </div>
-      </div>
+        :column="column"
+        :columnIndex="$columnIndex"
+        :moveElement="moveElement"
+      />
     </div>
 
     <div class="task-bg" v-if="isTaskOpen" @click.self="closeTask">
@@ -48,59 +28,43 @@
 
 <script>
 import { useGetters } from 'vuex-composition-helpers/dist';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
+import BoardColumn from '@/components/BoardColumn';
+import useMoveElement from '@/composables/useMoveElement';
 export default {
+  components: { BoardColumn },
   setup() {
     const store = useStore();
     const route = useRoute();
     const router = useRouter();
     const { board } = useGetters(['board']);
+    const newColumnName = ref('');
 
     const isTaskOpen = computed(() => route.name === 'task');
-    const openTask = (task) => {
-      router.push({ name: 'task', params: { id: task.id } });
-    };
     const closeTask = () => {
       router.push({ name: 'home' });
     };
-    const addTask = (event, column) => {
-      store.dispatch('addTask', {
-        column,
-        name: event.target.value,
+    const addColumn = () => {
+      store.dispatch('addColumn', {
+        name: newColumnName.value,
       });
 
-      event.target.value = '';
+      newColumnName.value = '';
     };
-    const pickupTask = (e, taskIndex, fromColumnIndex) => {
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.dropEffect = 'move';
 
-      e.dataTransfer.setData('taskIndex', taskIndex);
-      e.dataTransfer.setData('fromColumnIndex', fromColumnIndex);
-    };
-    const moveTask = (e, toColumnIndex) => {
-      const taskIndex = parseInt(e.dataTransfer.getData('taskIndex'));
-      const fromColumnIndex = parseInt(
-        e.dataTransfer.getData('fromColumnIndex'),
-      );
-
-      store.dispatch('moveTask', {
-        fromColumnIndex,
-        toColumnIndex,
-        taskIndex,
-      });
+    const moveElement = (e, toColumnIndex, toTaskIndex) => {
+      return useMoveElement(e, toColumnIndex, toTaskIndex, store);
     };
 
     return {
       board,
       isTaskOpen,
-      openTask,
       closeTask,
-      addTask,
-      pickupTask,
-      moveTask,
+      addColumn,
+      moveElement,
+      newColumnName,
     };
   },
 };
