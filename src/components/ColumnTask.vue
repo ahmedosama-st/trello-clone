@@ -18,7 +18,6 @@
 <script>
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
-import useMoveElement from '@/composables/useMoveElement';
 export default {
   props: {
     task: {
